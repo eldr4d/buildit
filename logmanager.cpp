@@ -10,6 +10,7 @@
 
 #include "logmanager.hpp"
 #include "blowfish.hpp"
+#include "printHTML.hpp"
 
 using namespace std;
 
@@ -25,8 +26,7 @@ void Logmanager::serialize(){
 		fileLength++;
 		holeFile.push_back('-');
 	}
-	cout << holeFile << endl;
-	cout << "ser " << fileLength << endl;
+	//cout << holeFile << endl;
 	unsigned char *encryptedData1, *encryptedData2;
 	encryptedData1 = new unsigned char[fileLength];
 	encryptedData2 = new unsigned char[fileLength];
@@ -53,7 +53,6 @@ void Logmanager::deserialize(){
 
 	unsigned char *unencryptedData;
 	unencryptedData = new unsigned char[fileLength];
-	cout << "des" << fileLength << endl;
 	CBlowFish oBlowFish((unsigned char*)secret.c_str(), secret.length());
 	oBlowFish.Decrypt((unsigned char*)holeFile.c_str(), unencryptedData, fileLength, CBlowFish::CBC);
 	//oBlowFish.Encrypt(encryptedData1, encryptedData2, fileLength, CBlowFish::CBC);
@@ -64,14 +63,18 @@ void Logmanager::deserialize(){
 	}
 	stringstream ss;
 	ss << unencryptedData;
-	boost::archive::text_iarchive iarch(ss); 
-	iarch >> artlog;
+	try{
+		boost::archive::text_iarchive iarch(ss); 
+		iarch >> artlog;
+	}catch(...){
+		throw -2;
+	}
 	file.close();
 }
 
 int Logmanager::append(string name, int timestamp, bool employer, int room, bool arrival){
 	//Wrong timestamp
-	if(currMaxTime > timestamp){
+	if(currMaxTime >= timestamp){
 		return -1;
 	}
 	currMaxTime = timestamp;
@@ -82,15 +85,16 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 	newvis.timeStamp = timestamp;
 	map<string, vector<visit> >::iterator iter = artlog.find(name);
 
-	//Wrong first arrival 
-	if(iter == artlog.end() && (newvis.arrival == false || newvis.room != -1)){
+	if((arrival == true && iter == artlog.end() && room == -1) ||
+	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == false && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
+	   (arrival == false && iter != artlog.end() && room == -1 && (iter->second[0].arrival == true && room == iter->second[0].room)) ||
+	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == true && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1)))){
+		artlog[name].insert(artlog[name].begin(),newvis);
+		return 0;
+	}else{
+		//cout << "T = " << newvis.timeStamp << " A = " << newvis.arrival << " R = " << newvis.room << endl;
 		return -1;
 	}
-	//Wrong leave
-	///if(iter != artlog.end() && iter->second[0].arrival  < )
-
-
-	artlog[name].insert(artlog[name].begin(),newvis);
 }
 
 void Logmanager::prettyPrint(){
@@ -105,7 +109,12 @@ void Logmanager::prettyPrint(){
 }
 
 
-void Logmanager::printState(){
+void Logmanager::printState(bool toHtml){
+	HTML htmlprint;
+	if(toHtml){
+		htmlprint.header();
+		htmlprint.startTable();
+	}
 	vector<string> employersInGallery;
 	vector<string> guestsInGallery;
 	for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
@@ -119,29 +128,52 @@ void Logmanager::printState(){
 			}
 		}
 	}
-
-	bool first = true;
-	for(unsigned int i=0; i<employersInGallery.size(); i++){
-		string tmp = employersInGallery[i];
-		tmp.erase(tmp.length()-1,1);
-		if(first)
-			cout << tmp;
-		else
-			cout << "," << tmp;
-		first = false;
+	bool first;
+	if(toHtml){
+		htmlprint.addDoubleHeaderToTable("Employee", "Guest");
+		int big =  employersInGallery.size() > guestsInGallery.size() ?  employersInGallery.size() : guestsInGallery.size();
+		for(unsigned int i=0; i<big; i++){
+			string data1, data2;
+			if(i < employersInGallery.size()){
+				data1 = employersInGallery[i];
+				data1.erase(data1.length()-1,1);
+			}else{
+				data1 = "";
+			}
+			if(i < guestsInGallery.size()){
+				data2 = guestsInGallery[i];
+				data2.erase(data2.length()-1,1);
+			}else{
+				data2 = "";
+			}
+			htmlprint.addDoubleElementToTable(data1,data2);
+		}
+		htmlprint.endTable();
+		htmlprint.startTable();
+	}else{
+		first = true;
+		for(unsigned int i=0; i<employersInGallery.size(); i++){
+			string tmp = employersInGallery[i];
+			tmp.erase(tmp.length()-1,1);
+			if(first)
+				cout << tmp;
+			else
+				cout << "," << tmp;
+			first = false;
+		}
+		cout << endl;
+		first = true;
+		for(unsigned int i=0; i<guestsInGallery.size(); i++){
+			string tmp = guestsInGallery[i];
+			tmp.erase(tmp.length()-1,1);
+			if(first)
+				cout << tmp;
+			else
+				cout << "," << tmp;
+			first = false;
+		}
+		cout << endl;
 	}
-	cout << endl;
-	first = true;
-	for(unsigned int i=0; i<guestsInGallery.size(); i++){
-		string tmp = guestsInGallery[i];
-		tmp.erase(tmp.length()-1,1);
-		if(first)
-			cout << tmp;
-		else
-			cout << "," << tmp;
-		first = false;
-	}
-	cout << endl;
 
 	map<int,vector<string> > rooms;
 	vector<string> totalPersons;
@@ -161,23 +193,55 @@ void Logmanager::printState(){
 		}
 	}
 
+	if(toHtml){
+		htmlprint.addDoubleHeaderToTable("Room ID", "Occupants");
+	}
 	for(map<int,vector<string> >::iterator iter = rooms.begin(); iter!=rooms.end(); iter++){
-		cout << iter->first << ":";
-		sort(iter->second.begin(), iter->second.end());
-		first = true;
-		for(unsigned int i=0; i<iter->second.size(); i++){
-			string tmp = iter->second[i];
-			if(first)
-				cout << tmp;
-			else
-				cout << "," << tmp;
-			first = false;
+		string data1,data2;
+		if(toHtml){
+			data1 = to_string(iter->first);
+		}else{
+			cout << iter->first << ":";
 		}
-		cout << endl;
+		sort(iter->second.begin(), iter->second.end());
+		if(toHtml){
+			first = true;
+			for(unsigned int i=0; i<iter->second.size(); i++){
+				string tmp = iter->second[i];
+				if(first){
+					data2 = tmp;
+				}else{
+					data2.append(",");
+					data2.append(tmp);
+				}
+				first = false;
+			}
+			htmlprint.addDoubleElementToTable(data1,data2);
+		}else{
+			first = true;
+			for(unsigned int i=0; i<iter->second.size(); i++){
+				string tmp = iter->second[i];
+				if(first)
+					cout << tmp;
+				else
+					cout << "," << tmp;
+				first = false;
+			}
+			cout << endl;
+		}
+	}
+	if(toHtml){
+		htmlprint.endTable();
+		htmlprint.footer();
 	}
 }
 
-void Logmanager::printUserData(string user){
+void Logmanager::printUserData(string user, bool toHtml){
+	HTML htmlprint;
+	if(toHtml){
+		htmlprint.header();
+		htmlprint.startTable();
+	}
 	map<string,vector<visit> >::iterator it = artlog.find(user);
 	if(it == artlog.end()){
 		return;
@@ -189,14 +253,29 @@ void Logmanager::printUserData(string user){
 			roomsEntered.insert(roomsEntered.begin(),allVisits[i].room);
 		}
 	}
+
 	bool first = true;
 	for(unsigned int i=0; i<roomsEntered.size(); i++){
 		if(first){
-			cout << roomsEntered[i];
+			if(toHtml){
+				htmlprint.addElementToTable(to_string(roomsEntered[i]));
+			}else{
+				cout << roomsEntered[i];
+			}
 		}else{
-			cout << "," << roomsEntered[i];
+			if(toHtml){
+				htmlprint.addElementToTable(to_string(roomsEntered[i]));
+			}else{
+				cout << "," << roomsEntered[i];
+			}
 		}
 		first = false;
 	}
-	cout << endl;
+	if(!toHtml){
+		cout << endl;
+	}
+	if(toHtml){
+		htmlprint.endTable();
+		htmlprint.footer();
+	}
 }

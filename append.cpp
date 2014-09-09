@@ -53,9 +53,17 @@ arguments getArguments(int argc, char **argv){
 				}
 				break;
 			case 'A':
+				if(args.arrival != -1){
+					args.allOk = false;
+					return args;
+				}
 				args.arrival = 1;
 				break;
 			case 'L':
+				if(args.arrival != -1){
+					args.allOk = false;
+					return args;
+				}
 				args.arrival = 0;
 				break;
 			case 'R':
@@ -73,8 +81,12 @@ arguments getArguments(int argc, char **argv){
 				}
 				break;
 			case '?':
+				args.allOk = false;
+				return args;
 				break;
 			default:
+				args.allOk = false;
+				return args;
 				cout << "Dafuq" << endl;
 				break;
 		}
@@ -94,16 +106,23 @@ arguments getArguments(int argc, char **argv){
 }
 
 int handleInput(arguments args){
-	if(args.token.length() <= 0 || args.timestamp == -1){
-		cout << "invalid1" << endl;
+	if(args.token.length() <= 0 || args.timestamp == -1  || args.employer == -1 || args.arrival == -1){
+		cout << "invalid" << endl;
 		return -1;
 	}
 	Logmanager myLog(args.logFile, args.token);
-	if(myLog.append(args.name, args.timestamp, args.employer == 1 ? true : false, args.room, args.arrival == 1? true : false) < 0 && args.batchMode == false){
-		cout << "invalid2" << endl;
+	if(myLog.securityViolation){
+		cerr << "security error" << endl;
 		return -1;
 	}
+	if(myLog.append(args.name, args.timestamp, args.employer == 1 ? true : false, args.room, args.arrival == 1? true : false) < 0 && args.batchMode == false){
+		cout << "invalid" << endl;
+		return -1;
+	}else if(args.batchMode == true){
+		return 0;
+	}
 	myLog.serialize();
+	//myLog.prettyPrint();
 	return 0;
 }
 
@@ -111,10 +130,10 @@ int main(int argc, char **argv){
 
 	arguments args = getArguments(argc, argv);
 	if(args.allOk == false){
-		cout << "invalid3" << endl;
-		return 0;
+		cout << "invalid" << endl;
+		return -1;
 	}
-
+	int returnState = 0;
 	if(args.batchMode == true){
     	ifstream batchFile(args.batchFileName);
     	if(batchFile.good()){
@@ -133,20 +152,15 @@ int main(int argc, char **argv){
 	    		if(args2.allOk == false || args2.batchMode == true){
 	    			continue;
 	    		}
-	    		handleInput(args2);
+	    		returnState = handleInput(args2);
     		}
     	}else{
-    		cout << "invalid4" << endl;
+    		//cout << "invalid4" << endl;
     		batchFile.close();
-    		return -1;
+    		return 0;
     	}
 	}else{
-		int ret = handleInput(args);
-		if(ret != 0){
-			cout << "invalid5" << endl;
-			return ret;
-		}
+		returnState = handleInput(args);
 	}
-	//myLog.prettyPrint();
-	return 0;
+	return returnState;
 }

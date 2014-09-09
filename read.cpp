@@ -76,17 +76,23 @@ int main(int argc, char **argv){
 	arguments args = getArguments(argc, argv);
 	if(args.allOk == false || args.token.length() <= 0){
 		cout << "invalid" << endl;
-		return 0;
+		return -1;
 	}
+
 	Logmanager myLog(args.logFile, args.token);
-	
+	if(myLog.securityViolation){
+		cerr << "integrity violation" << endl;
+		return -1;
+	}
 	myLog.prettyPrint();
 
 	if(args.state == true && args.employer == -1 && args.rooms == false){
-		myLog.printState();
-	}
-	if(args.state == false && args.employer != -1 && args.rooms == true){
-		myLog.printUserData(args.name);
+		myLog.printState(args.HTML);
+	}else if(args.state == false && args.employer != -1 && args.rooms == true){
+		myLog.printUserData(args.name, args.HTML);
+	}else{
+		cout << "invalid" << endl;
+		return -1;
 	}
 	return 0;
 }

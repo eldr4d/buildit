@@ -36,12 +36,18 @@ private:
 	string secret;
 	std::map<string,vector<visit> > artlog;
 public:
-	Logmanager(string filename, string token):currMaxTime(0),logFileName(filename),secret(token){
-		deserialize();
-		for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
-			if(iter->second.front().timeStamp > currMaxTime){
-				currMaxTime = iter->second.front().timeStamp;
+	bool securityViolation;
+public:
+	Logmanager(string filename, string token):currMaxTime(-1),logFileName(filename),secret(token),securityViolation(false){
+		try{
+			deserialize();
+			for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
+				if(iter->second.front().timeStamp > currMaxTime){
+					currMaxTime = iter->second.front().timeStamp;
+				}
 			}
+		}catch(const int& e){
+			securityViolation = true;
 		}
 	};
 
@@ -49,6 +55,6 @@ public:
 	void deserialize();
 	int append(string name, int timestamp, bool employer, int room, bool arrival);
 	void prettyPrint();
-	void printState();
-	void printUserData(string user);
+	void printState(bool toHtml);
+	void printUserData(string user, bool toHtml);
 };

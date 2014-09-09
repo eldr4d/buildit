@@ -12,8 +12,8 @@ append.o: append.cpp
 read.o: read.cpp
 	g++ $(CFLAGS) -c read.cpp
 
-logmanager.o: logmanager.cpp logmanager.hpp
-	g++ $(CFLAGS) -c logmanager.cpp logmanager.hpp
+logmanager.o: logmanager.cpp logmanager.hpp printHTML.hpp
+	g++ $(CFLAGS) -c logmanager.cpp logmanager.hpp printHTML.hpp
 
 blowfish.o: blowfish.cpp blowfish.hpp
 	g++ $(CFLAGS) -c blowfish.cpp blowfish.hpp
