@@ -175,7 +175,7 @@ void Logmanager::printState(bool toHtml){
 			totalPersons.push_back(iter->first);
 		}
 	}
-
+	
 	bool first;
 	if(toHtml){
 		htmlprint.addDoubleHeaderToTable("Employee", "Guest");
