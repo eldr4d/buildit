@@ -84,7 +84,7 @@ int main(int argc, char **argv){
 		cerr << "integrity violation" << endl;
 		return -1;
 	}
-	myLog.prettyPrint();
+	//myLog.prettyPrint();
 
 	if(args.state == true && args.employer == -1 && args.rooms == false){
 		myLog.printState(args.HTML);
