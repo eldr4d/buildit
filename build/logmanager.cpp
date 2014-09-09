@@ -1,6 +1,8 @@
 #include <sstream>
 #include <fstream> 
 #include <algorithm>
+#include <functional>
+#include <stdint.h>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/map.hpp>
@@ -54,15 +56,22 @@ void Logmanager::serialize(){
 	string holeFile = ss.str();
 
 	int fileLength = holeFile.length();
+
+	/*int32_t intHash = hash<string>()(holeFile);
+	char hashStr[4];
+	memcpy(hashStr, (char *)intHash, 4);
+	holeFile.insert(0,hashStr,4);
+	fileLength += 4;*/
+
 	while(fileLength%8 != 0){
 		fileLength++;
 		holeFile.append("-");
 	}
+
 	//cout << fileLength << endl;
 	//cout << holeFile << endl;
 	unsigned char *encryptedData1, *encryptedData2;
 	encryptedData1 = new unsigned char[fileLength];
-	encryptedData2 = new unsigned char[fileLength];
 
 	CBlowFish oBlowFish((unsigned char*)secret.c_str(), secret.length());
 	oBlowFish.Encrypt((unsigned char*)holeFile.c_str(), encryptedData1, fileLength, CBlowFish::CBC);
@@ -99,7 +108,23 @@ void Logmanager::deserialize(){
 		unencryptedData[fileLength-1] = '\0';
 		fileLength--;
 	}
+
+	/*string allData((char *)unencryptedData);
+	char hashString[4];
+	memcpy(hashString,unencryptedData,4);
+	allData.erase(0,4);
+
+	int32_t intHash = hash<string>()(allData);
+
+	if(*(int32_t *)hashString != intHash){
+		throw -2;
+	}
+	
 	//cout << unencryptedData << endl;
+	stringstream ss;
+	ss << allData;*/
+
+
 	stringstream ss;
 	ss << unencryptedData;
 	try{
@@ -122,11 +147,22 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 	newvis.arrival = arrival;
 	newvis.room = room;
 	newvis.timeStamp = timestamp;
+	if(arrival == true && room == -1){
+		newvis.lowerTime = timestamp;
+		newvis.upperTime = -1;
+	}else if(arrival == false && room == -1){
+		newvis.upperTime = timestamp;
+	}else{
+		newvis.upperTime = -1;
+	}
 	map<string, vector<visit> >::iterator iter = artlog.find(name);
 	if((arrival == true && iter == artlog.end() && room == -1) ||
 	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == false && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
 	   (arrival == false && iter != artlog.end() && room == -1 && ((iter->second[0].arrival == false && iter->second[0].room !=-1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
 	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == true && iter->second[0].room == room)))){
+	   	if(iter != artlog.end()){
+	   		newvis.lowerTime = iter->second[0].lowerTime;
+	   	}
 		artlog[name].insert(artlog[name].begin(),newvis);
 		return 0;
 	}else{
@@ -141,7 +177,9 @@ void Logmanager::prettyPrint(){
 		tmp.erase(tmp.length()-1,1);
 		cout << "User = " << tmp << endl;
 		for(int i=0; i<iter->second.size(); i++){
-			cout << "\tEvent " << i << ") timestamp = " << iter->second[i].timeStamp << " employer = " << iter->second[i].employer << " room = " << iter->second[i].room << " arrival = " << iter->second[i].arrival << endl;
+			cout << "\tEvent " << i << ") timestamp = " << iter->second[i].timeStamp << " employer = "
+				<< iter->second[i].employer << " room = " << iter->second[i].room << " arrival = "
+				<< iter->second[i].arrival << " [" << iter->second[i].lowerTime << "," << iter->second[0].upperTime << "]" << endl;
 		}
 	}
 }
@@ -317,6 +355,49 @@ void Logmanager::printUserData(string user, bool toHtml){
 		first = false;
 	}
 	if(!toHtml){
+		cout << endl;
+	}
+	if(toHtml){
+		htmlprint.endTable();
+		htmlprint.footer();
+	}
+}
+
+void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
+	HTML htmlprint;
+	if(toHtml){
+		htmlprint.header();
+		htmlprint.startTable();
+		htmlprint.addHeaderToTable("Employees");
+	}
+	vector<string> people;
+	for(map<string,vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
+		if(iter->second[0].employer == false){
+			continue;
+		}
+		visit temp = iter->second[0];
+		if((temp.upperTime != -1 && temp.upperTime < lower) || temp.lowerTime > upper){
+			continue;
+		}
+		string user = iter->first;
+		user.erase(user.length()-1,1);
+		people.push_back(user);
+	}
+	sort(people.begin(), people.end(), compare2);
+	if(toHtml){
+		for(unsigned int i=0; i<people.size(); i++){
+			htmlprint.addElementToTable(people[i]);
+		}
+	}else{
+		bool first = true;
+		for(unsigned int i=0; i<people.size(); i++){
+			if(first){
+				cout << people[i];
+			}else{
+				cout << "," << people[i];
+			}
+			first = false;
+		}
 		cout << endl;
 	}
 	if(toHtml){

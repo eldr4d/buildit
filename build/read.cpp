@@ -14,12 +14,15 @@ typedef struct{
 	string name;
 	string logFile;
 	bool allOk = false;
+	bool alpha = false;
+	int lower = -1;
+	int upper = -1;
 }arguments;
 
 arguments getArguments(int argc, char **argv){
 	arguments args;
 	int c;
-	while((c = getopt(argc, argv, "HK:SRE:G:")) != -1){
+	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:")) != -1){
 		switch(c){
 			case 'K':
 				args.token = string(optarg);
@@ -46,6 +49,15 @@ arguments getArguments(int argc, char **argv){
 				break;
 			case 'H':
 				args.HTML = true;
+				break;
+			case 'A':
+				args.alpha = true;
+				break;
+			case 'U':
+				args.upper = atoi(optarg);
+				break;
+			case 'L':
+				args.lower = atoi(optarg);
 				break;
 			case 'S':
 				args.state = true;
@@ -86,10 +98,12 @@ int main(int argc, char **argv){
 	}
 	//myLog.prettyPrint();
 
-	if(args.state == true && args.employer == -1 && args.rooms == false){
+	if(args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1){
 		myLog.printState(args.HTML);
-	}else if(args.state == false && args.employer != -1 && args.rooms == true){
+	}else if(args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1){
 		myLog.printUserData(args.name, args.HTML);
+	}else if(args.alpha == true && args.lower != -1 && args.upper != -1 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false){
+		myLog.personsInTimeWindow(args.lower,args.upper,args.HTML);
 	}else{
 		cout << "invalid" << endl;
 		return -1;

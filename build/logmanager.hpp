@@ -13,6 +13,8 @@ public:
 	bool arrival;
 	int room;
 	int timeStamp;
+	int upperTime;
+	int lowerTime;
 private:
 	friend class boost::serialization::access;
     // When the class Archive corresponds to an output archive, the
@@ -25,6 +27,8 @@ private:
         ar & arrival;
         ar & room;
         ar & timeStamp;
+        ar & upperTime;
+        ar & lowerTime;
     };
 };
 
@@ -59,5 +63,7 @@ public:
 	void prettyPrint();
 	void printState(bool toHtml);
 	void printUserData(string user, bool toHtml);
+	void personsInTimeWindow(int lower, int upper, bool toHtml);
+
 };
 
