@@ -245,7 +245,7 @@ void Logmanager::printState(bool toHtml){
 		}else{
 			cout << iter->first << ": ";
 		}
-		sort(iter->second.begin(), iter->second.end());
+		//sort(iter->second.begin(), iter->second.end());
 		if(toHtml){
 			first = true;
 			for(unsigned int i=0; i<iter->second.size(); i++){
