@@ -15,15 +15,20 @@ typedef struct{
 	string logFile;
 	bool allOk = false;
 	bool alpha = false;
+	bool beta = false;
 	int lower = -1;
 	int upper = -1;
+	int lower2 = -1;
+	int upper2 = -1;
 	bool timeFlag = false;
 }arguments;
 
 arguments getArguments(int argc, char **argv){
 	arguments args;
 	int c;
-	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:T")) != -1){
+	bool firstUdone = false;
+	bool firstLdone = false;
+	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:TB")) != -1){
 		switch(c){
 			case 'K':
 				args.token = string(optarg);
@@ -52,12 +57,34 @@ arguments getArguments(int argc, char **argv){
 			case 'A':
 				args.alpha = true;
 				break;
+			case 'B':
+				args.beta = true;
+				break;
 			case 'U':
-				args.upper = atoi(optarg);
+				if(firstUdone == false){
+					args.upper = atoi(optarg);
+					firstUdone = true;
+				}else{
+					if(args.upper2 == -1){
+						args.upper2 = atoi(optarg);
+					}else{
+						args.allOk = false;
+						return args;
+					}
+				}
 				break;
 			case 'L':
-				args.lower = atoi(optarg);
-				break;
+				if(firstLdone == false){
+					args.lower = atoi(optarg);
+					firstLdone = true;
+				}else{
+					if(args.lower2 == -1){
+						args.lower2 = atoi(optarg);
+					}else{
+						args.allOk = false;
+						return args;
+					}
+				}				break;
 			case 'S':
 				args.state = true;
 				break;
@@ -100,15 +127,16 @@ int main(int argc, char **argv){
 	}
 	//myLog.prettyPrint();
 
-	if(args.timeFlag == false && args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1){
+	if(args.timeFlag == false && args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
 		myLog.printState(args.HTML);
-	}else if(args.timeFlag == false && args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1){
+	}else if(args.timeFlag == false && args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
 		myLog.printUserData(args.name, args.HTML);
-	}else if(args.timeFlag == false && args.alpha == true && args.lower != -1 && args.upper != -1 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false){
+	}else if(args.timeFlag == false && args.alpha == true && args.lower2 == -1 && args.upper2 == -1 && args.lower >= 0 && args.upper >= 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == false){
 		myLog.personsInTimeWindow(args.lower,args.upper,args.HTML);
-	}else if(args.timeFlag == true && args.state == false && args.employer != -1 && args.rooms == false && 
-		args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false){
+	}else if(args.timeFlag == true && args.state == false && args.employer != -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false && args.beta == false){
 		myLog.totalTimeOfUser(args.name);
+	}else if(args.timeFlag == false && args.alpha == false && args.lower2 >= 0 && args.upper2 >= 0 && args.lower2 < args.upper2 && args.lower >= 0 && args.upper != 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == true){
+		myLog.leavedPersonsDuringTimeWindow(args.lower,args.upper,args.lower2,args.upper2,args.HTML);
 	}else{
 		cout << "invalid" << endl;
 		return -1;

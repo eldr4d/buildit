@@ -175,7 +175,7 @@ void Logmanager::printState(bool toHtml){
 			totalPersons.push_back(iter->first);
 		}
 	}
-	
+
 	bool first;
 	if(toHtml){
 		htmlprint.addDoubleHeaderToTable("Employee", "Guest");
@@ -363,6 +363,7 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 		htmlprint.footer();
 	}
 }
+
 void Logmanager::totalTimeOfUser(string user){
 	map<string,vector<visit> >::iterator it = artlog.find(user);
 	if(it == artlog.end()){
@@ -373,5 +374,49 @@ void Logmanager::totalTimeOfUser(string user){
 		cout << currMaxTime - it->second[0].lowerTime << endl;
 	}else{
 		cout << it->second[0].upperTime - it->second[0].lowerTime << endl;
+	}
+}
+
+void Logmanager::leavedPersonsDuringTimeWindow(int lower, int upper, int lower2, int upper2, bool toHtml){
+	HTML htmlprint;
+	if(toHtml){
+		htmlprint.header();
+		htmlprint.startTable();
+		htmlprint.addHeaderToTable("Employees");
+	}
+	vector<string> people;
+	for(map<string,vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
+		if(iter->second[0].employer == false){
+			continue;
+		}
+		visit temp = iter->second[0];
+		if((temp.upperTime != -1 && temp.upperTime < lower) || temp.lowerTime > upper){
+			continue;
+		}
+		if(!((temp.upperTime != -1 && temp.upperTime < lower2) || temp.lowerTime > upper2)){
+			continue;
+		}
+		string user = iter->first;
+		people.push_back(user);
+	}
+	if(toHtml){
+		for(unsigned int i=0; i<people.size(); i++){
+			htmlprint.addElementToTable(people[i]);
+		}
+	}else{
+		bool first = true;
+		for(unsigned int i=0; i<people.size(); i++){
+			if(first){
+				cout << people[i];
+			}else{
+				cout << "," << people[i];
+			}
+			first = false;
+		}
+		cout << endl;
+	}
+	if(toHtml){
+		htmlprint.endTable();
+		htmlprint.footer();
 	}
 }

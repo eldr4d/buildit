@@ -65,6 +65,8 @@ public:
 	void printUserData(string user, bool toHtml);
 	void totalTimeOfUser(string user);
 	void personsInTimeWindow(int lower, int upper, bool toHtml);
+	void leavedPersonsDuringTimeWindow(int lower, int upper, int lower2, int upper2, bool toHtml);
+
 
 };
 
