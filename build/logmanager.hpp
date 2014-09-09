@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <boost/serialization/serialization.hpp>
-
 using namespace std;
 
 class visit{
@@ -26,8 +25,9 @@ private:
         ar & arrival;
         ar & room;
         ar & timeStamp;
-    }
+    };
 };
+
 
 class Logmanager{
 private:
@@ -46,10 +46,12 @@ public:
 					currMaxTime = iter->second.front().timeStamp;
 				}
 			}
+			//prettyPrint();
 		}catch(const int& e){
 			securityViolation = true;
 		}
 	};
+
 
 	void serialize();
 	void deserialize();
@@ -58,3 +60,4 @@ public:
 	void printState(bool toHtml);
 	void printUserData(string user, bool toHtml);
 };
+

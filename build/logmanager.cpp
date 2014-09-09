@@ -14,8 +14,40 @@
 
 using namespace std;
 
+bool compare( const string &left, const string &right ) {
+	for( string::const_iterator lit = left.begin(), rit = right.begin(); lit != left.end()-1 && rit != right.end()-1; lit++, rit++ ){
+		if( ( *lit ) < ( *rit ) ){
+			return true;
+		}
+		else if( ( *lit ) > ( *rit ) ){
+			return false;
+		}
+	}
+	if( left.size() < right.size() ){
+		return true;
+	}
+	return false;
+}
+
+bool compare2( const string &left, const string &right ) {
+	for( string::const_iterator lit = left.begin(), rit = right.begin(); lit != left.end() && rit != right.end(); lit++, rit++ ){
+		if( ( *lit ) < ( *rit ) ){
+			return true;
+		}
+		else if( ( *lit ) > ( *rit ) ){
+			return false;
+		}
+	}
+	if( left.size() < right.size() ){
+		return true;
+	}
+	return false;
+}
+
+
+
 void Logmanager::serialize(){
- 	ofstream file(logFileName.c_str(), ios::in | ios::binary);
+ 	ofstream file(logFileName.c_str(), ios::out | ios::binary);
  	stringstream ss;
 	boost::archive::text_oarchive oarch(ss);
 	oarch << artlog;
@@ -24,8 +56,9 @@ void Logmanager::serialize(){
 	int fileLength = holeFile.length();
 	while(fileLength%8 != 0){
 		fileLength++;
-		holeFile.push_back('-');
+		holeFile.append("-");
 	}
+	//cout << fileLength << endl;
 	//cout << holeFile << endl;
 	unsigned char *encryptedData1, *encryptedData2;
 	encryptedData1 = new unsigned char[fileLength];
@@ -41,7 +74,10 @@ void Logmanager::serialize(){
 }
 
 void Logmanager::deserialize(){
-	ifstream file(logFileName.c_str(), ios::out | ios::binary);
+	ifstream file(logFileName.c_str(), ios::in | ios::binary);
+	if(!file.good()){
+		return;
+	}
 	file.seekg(0, ios::end);
 	if(file.tellg() == 0){
 		file.close();
@@ -52,15 +88,18 @@ void Logmanager::deserialize(){
 	int fileLength = holeFile.length();	
 
 	unsigned char *unencryptedData;
-	unencryptedData = new unsigned char[fileLength];
+	unencryptedData = new unsigned char[fileLength+1];
 	CBlowFish oBlowFish((unsigned char*)secret.c_str(), secret.length());
 	oBlowFish.Decrypt((unsigned char*)holeFile.c_str(), unencryptedData, fileLength, CBlowFish::CBC);
 	//oBlowFish.Encrypt(encryptedData1, encryptedData2, fileLength, CBlowFish::CBC);
+	unencryptedData[fileLength] = '\0';
+	//cout << fileLength << endl;
 	//cout << unencryptedData << endl;
 	while(unencryptedData[fileLength-1] == '-'){
 		unencryptedData[fileLength-1] = '\0';
 		fileLength--;
 	}
+	//cout << unencryptedData << endl;
 	stringstream ss;
 	ss << unencryptedData;
 	try{
@@ -84,11 +123,10 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 	newvis.room = room;
 	newvis.timeStamp = timestamp;
 	map<string, vector<visit> >::iterator iter = artlog.find(name);
-
 	if((arrival == true && iter == artlog.end() && room == -1) ||
 	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == false && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
-	   (arrival == false && iter != artlog.end() && room == -1 && (iter->second[0].arrival == true && room == iter->second[0].room)) ||
-	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == true && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1)))){
+	   (arrival == false && iter != artlog.end() && room == -1 && ((iter->second[0].arrival == false && iter->second[0].room !=-1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
+	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == true && iter->second[0].room == room)))){
 		artlog[name].insert(artlog[name].begin(),newvis);
 		return 0;
 	}else{
@@ -128,6 +166,9 @@ void Logmanager::printState(bool toHtml){
 			}
 		}
 	}
+	sort(employersInGallery.begin(), employersInGallery.end(), compare);
+	sort(guestsInGallery.begin(), guestsInGallery.end(), compare);
+
 	bool first;
 	if(toHtml){
 		htmlprint.addDoubleHeaderToTable("Employee", "Guest");
@@ -188,6 +229,9 @@ void Logmanager::printState(bool toHtml){
 			continue;
 		}else{
 			int room = artlog[temp].front().room;
+			if(room == -1){
+				continue;
+			}
 			temp.erase(temp.length()-1,1);
 			rooms[room].push_back(temp);
 		}
@@ -201,9 +245,9 @@ void Logmanager::printState(bool toHtml){
 		if(toHtml){
 			data1 = to_string(iter->first);
 		}else{
-			cout << iter->first << ":";
+			cout << iter->first << ": ";
 		}
-		sort(iter->second.begin(), iter->second.end());
+		sort(iter->second.begin(), iter->second.end(), compare2);
 		if(toHtml){
 			first = true;
 			for(unsigned int i=0; i<iter->second.size(); i++){
@@ -241,6 +285,7 @@ void Logmanager::printUserData(string user, bool toHtml){
 	if(toHtml){
 		htmlprint.header();
 		htmlprint.startTable();
+		htmlprint.addHeaderToTable("Rooms");
 	}
 	map<string,vector<visit> >::iterator it = artlog.find(user);
 	if(it == artlog.end()){

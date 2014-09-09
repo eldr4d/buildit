@@ -1,10 +1,10 @@
-CFLAGS = -std=c++11 -g
+CFLAGS = -std=c++11 -O3
 LFLAGS = -L/usr/local/lib/ -lboost_iostreams -lboost_serialization
 
 
 all: append.o read.o logmanager.o blowfish.o
-	g++ $(CFLAGS) -o append append.o logmanager.o blowfish.o $(LFLAGS)
-	g++ $(CFLAGS) -o read read.o logmanager.o blowfish.o $(LFLAGS)
+	g++ $(CFLAGS) -o logappend append.o logmanager.o blowfish.o $(LFLAGS)
+	g++ $(CFLAGS) -o logread read.o logmanager.o blowfish.o $(LFLAGS)
 
 append.o: append.cpp
 	g++ $(CFLAGS) -c append.cpp
@@ -20,4 +20,4 @@ blowfish.o: blowfish.cpp blowfish.hpp
 
 
 clean:
-	rm -r *.o a.out append read
+	rm -r *.o *.gch logappend logread
