@@ -17,12 +17,13 @@ typedef struct{
 	bool alpha = false;
 	int lower = -1;
 	int upper = -1;
+	bool timeFlag = false;
 }arguments;
 
 arguments getArguments(int argc, char **argv){
 	arguments args;
 	int c;
-	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:")) != -1){
+	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:T")) != -1){
 		switch(c){
 			case 'K':
 				args.token = string(optarg);
@@ -65,6 +66,9 @@ arguments getArguments(int argc, char **argv){
 			case 'R':
 				args.rooms = true;
 				break;
+			case 'T':
+				args.timeFlag = true;
+				break;
 			case '?':
 				break;
 		}
@@ -98,12 +102,15 @@ int main(int argc, char **argv){
 	}
 	//myLog.prettyPrint();
 
-	if(args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1){
+	if(args.timeFlag == false && args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1){
 		myLog.printState(args.HTML);
-	}else if(args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1){
+	}else if(args.timeFlag == false && args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1){
 		myLog.printUserData(args.name, args.HTML);
-	}else if(args.alpha == true && args.lower != -1 && args.upper != -1 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false){
+	}else if(args.timeFlag == false && args.alpha == true && args.lower != -1 && args.upper != -1 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false){
 		myLog.personsInTimeWindow(args.lower,args.upper,args.HTML);
+	}else if(args.timeFlag == true && args.state == false && args.employer != -1 && args.rooms == false && 
+		args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false){
+		myLog.totalTimeOfUser(args.name);
 	}else{
 		cout << "invalid" << endl;
 		return -1;

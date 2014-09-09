@@ -63,6 +63,7 @@ public:
 	void prettyPrint();
 	void printState(bool toHtml);
 	void printUserData(string user, bool toHtml);
+	void totalTimeOfUser(string user);
 	void personsInTimeWindow(int lower, int upper, bool toHtml);
 
 };

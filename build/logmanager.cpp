@@ -405,3 +405,15 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 		htmlprint.footer();
 	}
 }
+void Logmanager::totalTimeOfUser(string user){
+	map<string,vector<visit> >::iterator it = artlog.find(user);
+	if(it == artlog.end()){
+		return;
+	}
+
+	if(it->second[0].upperTime == -1){
+		cout << currMaxTime - it->second[0].lowerTime << endl;
+	}else{
+		cout << it->second[0].upperTime - it->second[0].lowerTime << endl;
+	}
+}
