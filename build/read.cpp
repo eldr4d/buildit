@@ -130,11 +130,11 @@ int main(int argc, char **argv){
 	if(args.timeFlag == false && args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
 		myLog.printState(args.HTML);
 	}else if(args.timeFlag == false && args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
-		myLog.printUserData(args.name, args.HTML);
+		myLog.printUserData(args.name, args.employer == 1 ? true : false, args.HTML);
 	}else if(args.timeFlag == false && args.alpha == true && args.lower2 == -1 && args.upper2 == -1 && args.lower >= 0 && args.upper >= 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == false){
 		myLog.personsInTimeWindow(args.lower,args.upper,args.HTML);
 	}else if(args.timeFlag == true && args.state == false && args.employer != -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false && args.beta == false){
-		myLog.totalTimeOfUser(args.name);
+		myLog.totalTimeOfUser(args.name, args.employer == 1 ? true : false);
 	}else if(args.timeFlag == false && args.alpha == false && args.lower2 >= 0 && args.upper2 >= 0 && args.lower2 < args.upper2 && args.lower >= 0 && args.upper != 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == true){
 		myLog.leavedPersonsDuringTimeWindow(args.lower,args.upper,args.lower2,args.upper2,args.HTML);
 	}else{

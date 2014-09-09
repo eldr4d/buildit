@@ -62,8 +62,8 @@ public:
 	int append(string name, int timestamp, bool employer, int room, bool arrival);
 	void prettyPrint();
 	void printState(bool toHtml);
-	void printUserData(string user, bool toHtml);
-	void totalTimeOfUser(string user);
+	void printUserData(string user, bool employer, bool toHtml);
+	void totalTimeOfUser(string user, bool employer);
 	void personsInTimeWindow(int lower, int upper, bool toHtml);
 	void leavedPersonsDuringTimeWindow(int lower, int upper, int lower2, int upper2, bool toHtml);
 

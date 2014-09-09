@@ -57,14 +57,12 @@ void Logmanager::deserialize(){
 	if(!file.good()){
 		return;
 	}
-	file.seekg(0, ios::end);
-	if(file.tellg() == 0){
-		file.close();
-		return;
-	}
-	file.seekg(0,ios::beg);
+
 	string holeFile((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	int fileLength = holeFile.length();	
+	if(fileLength == 0){
+		return;
+	}
 
 	unsigned char *unencryptedData;
 	unencryptedData = new unsigned char[fileLength+1];
@@ -126,6 +124,9 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 		newvis.upperTime = -1;
 	}
 	map<string, vector<visit> >::iterator iter = artlog.find(name);
+	if(iter != artlog.end() && iter->second[0].employer != employer){
+		return -1;
+	}
 	if((arrival == true && iter == artlog.end() && room == -1) ||
 	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == false && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
 	   (arrival == false && iter != artlog.end() && room == -1 && ((iter->second[0].arrival == false && iter->second[0].room !=-1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
@@ -278,15 +279,23 @@ void Logmanager::printState(bool toHtml){
 	}
 }
 
-void Logmanager::printUserData(string user, bool toHtml){
+void Logmanager::printUserData(string user, bool employer, bool toHtml){
 	HTML htmlprint;
+
+	map<string,vector<visit> >::iterator it = artlog.find(user);
+	if(it != artlog.end() && it->second[0].employer != employer){
+		return;
+	}
 	if(toHtml){
 		htmlprint.header();
 		htmlprint.startTable();
 		htmlprint.addHeaderToTable("Rooms");
 	}
-	map<string,vector<visit> >::iterator it = artlog.find(user);
 	if(it == artlog.end()){
+		if(toHtml){
+			htmlprint.endTable();
+			htmlprint.footer();
+		}
 		return;
 	}
 	vector<visit> allVisits = it->second;
@@ -364,8 +373,11 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 	}
 }
 
-void Logmanager::totalTimeOfUser(string user){
+void Logmanager::totalTimeOfUser(string user, bool employer){
 	map<string,vector<visit> >::iterator it = artlog.find(user);
+	if(it != artlog.end() && it->second[0].employer != employer){
+		return;
+	}
 	if(it == artlog.end()){
 		return;
 	}
