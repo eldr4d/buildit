@@ -16,36 +16,6 @@
 
 using namespace std;
 
-bool compare( const string &left, const string &right ) {
-	for( string::const_iterator lit = left.begin(), rit = right.begin(); lit != left.end()-1 && rit != right.end()-1; lit++, rit++ ){
-		if( ( *lit ) < ( *rit ) ){
-			return true;
-		}
-		else if( ( *lit ) > ( *rit ) ){
-			return false;
-		}
-	}
-	if( left.size() < right.size() ){
-		return true;
-	}
-	return false;
-}
-
-bool compare2( const string &left, const string &right ) {
-	for( string::const_iterator lit = left.begin(), rit = right.begin(); lit != left.end() && rit != right.end(); lit++, rit++ ){
-		if( ( *lit ) < ( *rit ) ){
-			return true;
-		}
-		else if( ( *lit ) > ( *rit ) ){
-			return false;
-		}
-	}
-	if( left.size() < right.size() ){
-		return true;
-	}
-	return false;
-}
-
 
 
 void Logmanager::serialize(){
@@ -174,7 +144,6 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 void Logmanager::prettyPrint(){
 	for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
 		string tmp = iter->first;
-		tmp.erase(tmp.length()-1,1);
 		cout << "User = " << tmp << endl;
 		for(int i=0; i<iter->second.size(); i++){
 			cout << "\tEvent " << i << ") timestamp = " << iter->second[i].timeStamp << " employer = "
@@ -193,6 +162,7 @@ void Logmanager::printState(bool toHtml){
 	}
 	vector<string> employersInGallery;
 	vector<string> guestsInGallery;
+	vector<string> totalPersons;
 	for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
 		if(iter->second.front().arrival==false && iter->second.front().room==-1){
 			continue;
@@ -202,10 +172,9 @@ void Logmanager::printState(bool toHtml){
 			}else{
 				guestsInGallery.push_back(iter->first);
 			}
+			totalPersons.push_back(iter->first);
 		}
 	}
-	sort(employersInGallery.begin(), employersInGallery.end(), compare);
-	sort(guestsInGallery.begin(), guestsInGallery.end(), compare);
 
 	bool first;
 	if(toHtml){
@@ -215,13 +184,11 @@ void Logmanager::printState(bool toHtml){
 			string data1, data2;
 			if(i < employersInGallery.size()){
 				data1 = employersInGallery[i];
-				data1.erase(data1.length()-1,1);
 			}else{
 				data1 = "";
 			}
 			if(i < guestsInGallery.size()){
 				data2 = guestsInGallery[i];
-				data2.erase(data2.length()-1,1);
 			}else{
 				data2 = "";
 			}
@@ -233,7 +200,6 @@ void Logmanager::printState(bool toHtml){
 		first = true;
 		for(unsigned int i=0; i<employersInGallery.size(); i++){
 			string tmp = employersInGallery[i];
-			tmp.erase(tmp.length()-1,1);
 			if(first)
 				cout << tmp;
 			else
@@ -244,7 +210,6 @@ void Logmanager::printState(bool toHtml){
 		first = true;
 		for(unsigned int i=0; i<guestsInGallery.size(); i++){
 			string tmp = guestsInGallery[i];
-			tmp.erase(tmp.length()-1,1);
 			if(first)
 				cout << tmp;
 			else
@@ -255,10 +220,6 @@ void Logmanager::printState(bool toHtml){
 	}
 
 	map<int,vector<string> > rooms;
-	vector<string> totalPersons;
-	totalPersons.reserve(employersInGallery.size() + guestsInGallery.size());
-	totalPersons.insert(totalPersons.end(),employersInGallery.begin(),employersInGallery.end());
-	totalPersons.insert(totalPersons.end(),guestsInGallery.begin(),guestsInGallery.end());
 
 	for(unsigned int i=0; i< totalPersons.size(); i++){
 		string temp = totalPersons[i];
@@ -270,7 +231,6 @@ void Logmanager::printState(bool toHtml){
 			if(room == -1){
 				continue;
 			}
-			temp.erase(temp.length()-1,1);
 			rooms[room].push_back(temp);
 		}
 	}
@@ -285,7 +245,7 @@ void Logmanager::printState(bool toHtml){
 		}else{
 			cout << iter->first << ": ";
 		}
-		sort(iter->second.begin(), iter->second.end(), compare2);
+		sort(iter->second.begin(), iter->second.end());
 		if(toHtml){
 			first = true;
 			for(unsigned int i=0; i<iter->second.size(); i++){
@@ -380,10 +340,8 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 			continue;
 		}
 		string user = iter->first;
-		user.erase(user.length()-1,1);
 		people.push_back(user);
 	}
-	sort(people.begin(), people.end(), compare2);
 	if(toHtml){
 		for(unsigned int i=0; i<people.size(); i++){
 			htmlprint.addElementToTable(people[i]);

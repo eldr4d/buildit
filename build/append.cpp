@@ -42,7 +42,6 @@ arguments getArguments(int argc, char **argv){
 				if(args.employer == -1){
 					args.employer = 1;
 					args.name = string(optarg);
-					args.name.append("E");
 				}else{
 					args.allOk = false;
 					return args;
@@ -52,7 +51,6 @@ arguments getArguments(int argc, char **argv){
 				if(args.employer == -1){
 					args.employer = 0; 
 					args.name = string(optarg);
-					args.name.append("G");
 				}else{
 					args.allOk = false;
 					return args;
