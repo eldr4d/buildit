@@ -124,17 +124,17 @@ int Logmanager::append(string name, int timestamp, bool employer, int room, bool
 		newvis.upperTime = -1;
 	}
 	map<string, vector<visit> >::iterator iter = artlog.find(name);
-	if(iter != artlog.end() && iter->second[0].employer != employer){
+	if(iter != artlog.end() && iter->second.back().employer != employer){
 		return -1;
 	}
 	if((arrival == true && iter == artlog.end() && room == -1) ||
-	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == false && iter->second[0].room != -1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
-	   (arrival == false && iter != artlog.end() && room == -1 && ((iter->second[0].arrival == false && iter->second[0].room !=-1) || (iter->second[0].arrival == true && iter->second[0].room == -1))) ||
-	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second[0].arrival == true && iter->second[0].room == room)))){
+	   (arrival == true && iter != artlog.end() && room != -1 && ((iter->second.back().arrival == false && iter->second.back().room != -1) || (iter->second.back().arrival == true && iter->second.back().room == -1))) ||
+	   (arrival == false && iter != artlog.end() && room == -1 && ((iter->second.back().arrival == false && iter->second.back().room !=-1) || (iter->second.back().arrival == true && iter->second.back().room == -1))) ||
+	   (arrival == false && iter != artlog.end() && room != -1 && ((iter->second.back().arrival == true && iter->second.back().room == room)))){
 	   	if(iter != artlog.end()){
-	   		newvis.lowerTime = iter->second[0].lowerTime;
+	   		newvis.lowerTime = iter->second.back().lowerTime;
 	   	}
-		artlog[name].insert(artlog[name].begin(),newvis);
+		artlog[name].push_back(newvis);
 		return 0;
 	}else{
 		//cout << "T = " << newvis.timeStamp << " A = " << newvis.arrival << " R = " << newvis.room << endl;
@@ -146,10 +146,10 @@ void Logmanager::prettyPrint(){
 	for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
 		string tmp = iter->first;
 		cout << "User = " << tmp << endl;
-		for(int i=0; i<iter->second.size(); i++){
+		for(int i=iter->second.size()-1; i>=0; i--){
 			cout << "\tEvent " << i << ") timestamp = " << iter->second[i].timeStamp << " employer = "
 				<< iter->second[i].employer << " room = " << iter->second[i].room << " arrival = "
-				<< iter->second[i].arrival << " [" << iter->second[i].lowerTime << "," << iter->second[0].upperTime << "]" << endl;
+				<< iter->second[i].arrival << " [" << iter->second[i].lowerTime << "," << iter->second[i].upperTime << "]" << endl;
 		}
 	}
 }
@@ -165,10 +165,10 @@ void Logmanager::printState(bool toHtml){
 	vector<string> guestsInGallery;
 	vector<string> totalPersons;
 	for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
-		if(iter->second.front().arrival==false && iter->second.front().room==-1){
+		if(iter->second.back().arrival==false && iter->second.back().room==-1){
 			continue;
 		}else{
-			if(iter->second.front().employer){
+			if(iter->second.back().employer){
 				employersInGallery.push_back(iter->first);
 			}else{
 				guestsInGallery.push_back(iter->first);
@@ -224,11 +224,11 @@ void Logmanager::printState(bool toHtml){
 
 	for(unsigned int i=0; i< totalPersons.size(); i++){
 		string temp = totalPersons[i];
-		if(artlog[temp].front().arrival==false){
+		if(artlog[temp].back().arrival==false){
 			//They are not in a room
 			continue;
 		}else{
-			int room = artlog[temp].front().room;
+			int room = artlog[temp].back().room;
 			if(room == -1){
 				continue;
 			}
@@ -283,7 +283,7 @@ void Logmanager::printUserData(string user, bool employer, bool toHtml){
 	HTML htmlprint;
 
 	map<string,vector<visit> >::iterator it = artlog.find(user);
-	if(it != artlog.end() && it->second[0].employer != employer){
+	if(it != artlog.end() && it->second.back().employer != employer){
 		return;
 	}
 	if(toHtml){
@@ -300,7 +300,7 @@ void Logmanager::printUserData(string user, bool employer, bool toHtml){
 	}
 	vector<visit> allVisits = it->second;
 	vector<int> roomsEntered;
-	for(unsigned int i=0; i<allVisits.size(); i++){
+	for(int i=allVisits.size()-1; i>=0; i--){
 		if(allVisits[i].arrival == true && allVisits[i].room != -1){
 			roomsEntered.insert(roomsEntered.begin(),allVisits[i].room);
 		}
@@ -341,10 +341,10 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 	}
 	vector<string> people;
 	for(map<string,vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
-		if(iter->second[0].employer == false){
+		if(iter->second.back().employer == false){
 			continue;
 		}
-		visit temp = iter->second[0];
+		visit temp = iter->second.back();
 		if((temp.upperTime != -1 && temp.upperTime < lower) || temp.lowerTime > upper){
 			continue;
 		}
@@ -375,17 +375,17 @@ void Logmanager::personsInTimeWindow(int lower, int upper, bool toHtml){
 
 void Logmanager::totalTimeOfUser(string user, bool employer){
 	map<string,vector<visit> >::iterator it = artlog.find(user);
-	if(it != artlog.end() && it->second[0].employer != employer){
+	if(it != artlog.end() && it->second.back().employer != employer){
 		return;
 	}
 	if(it == artlog.end()){
 		return;
 	}
 
-	if(it->second[0].upperTime == -1){
-		cout << currMaxTime - it->second[0].lowerTime << endl;
+	if(it->second.back().upperTime == -1){
+		cout << currMaxTime - it->second.back().lowerTime << endl;
 	}else{
-		cout << it->second[0].upperTime - it->second[0].lowerTime << endl;
+		cout << it->second.back().upperTime - it->second.back().lowerTime << endl;
 	}
 }
 
@@ -398,10 +398,10 @@ void Logmanager::leavedPersonsDuringTimeWindow(int lower, int upper, int lower2,
 	}
 	vector<string> people;
 	for(map<string,vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
-		if(iter->second[0].employer == false){
+		if(iter->second.back().employer == false){
 			continue;
 		}
-		visit temp = iter->second[0];
+		visit temp = iter->second.back();
 		if((temp.upperTime != -1 && temp.upperTime < lower) || temp.lowerTime > upper){
 			continue;
 		}
@@ -445,7 +445,7 @@ void Logmanager::printSameRooms(vector<pair<string, bool> > allUsers, bool toHtm
 	bool first = true;
 	for(vector<pair<string,bool> >::iterator iter = allUsers.begin(); iter!=allUsers.end(); iter++){
 		map<string,vector<visit> >::iterator it2 = artlog.find(iter->first);
-		if(it2 == artlog.end() || it2->second[0].employer != iter->second){
+		if(it2 == artlog.end() || it2->second.back().employer != iter->second){
 			if(toHtml){
 				htmlprint.endTable();
 				htmlprint.footer();
@@ -453,7 +453,7 @@ void Logmanager::printSameRooms(vector<pair<string, bool> > allUsers, bool toHtm
 			return;
 		}
 		int indicatorThatWasThereBefore = 0;
-		for(vector<visit>::reverse_iterator rit = it2->second.rbegin(); rit!=it2->second.rend(); rit++){
+		for(vector<visit>::iterator rit = it2->second.begin(); rit!=it2->second.end(); rit++){
 			int room = rit->room;
 			bool arrival = rit->arrival;
 			int timestamp = rit->timeStamp;

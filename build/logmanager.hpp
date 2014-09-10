@@ -47,7 +47,7 @@ public:
 			deserialize();
 			for(map<string, vector<visit> >::iterator iter = artlog.begin(); iter != artlog.end(); iter++){
 				if(iter->second.front().timeStamp > currMaxTime){
-					currMaxTime = iter->second.front().timeStamp;
+					currMaxTime = iter->second.back().timeStamp;
 				}
 			}
 			//prettyPrint();
