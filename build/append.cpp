@@ -34,6 +34,10 @@ arguments getArguments(int argc, char **argv){
 		switch(c){
 			case 'T':
 				args.timestamp = atoi(optarg);
+				if(args.timestamp < 0){
+					args.allOk = false;
+					return args;
+				}
 				break;
 			case 'K':
 				args.token = string(optarg);

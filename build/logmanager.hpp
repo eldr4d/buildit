@@ -66,6 +66,7 @@ public:
 	void totalTimeOfUser(string user, bool employer);
 	void personsInTimeWindow(int lower, int upper, bool toHtml);
 	void leavedPersonsDuringTimeWindow(int lower, int upper, int lower2, int upper2, bool toHtml);
+	void printSameRooms(vector<pair<string, bool> > allUsers, bool toHtml);
 
 
 };

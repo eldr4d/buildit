@@ -432,3 +432,105 @@ void Logmanager::leavedPersonsDuringTimeWindow(int lower, int upper, int lower2,
 		htmlprint.footer();
 	}
 }
+
+void Logmanager::printSameRooms(vector<pair<string, bool> > allUsers, bool toHtml){
+	HTML htmlprint;
+	if(toHtml){
+		htmlprint.header();
+		htmlprint.startTable();
+		htmlprint.addHeaderToTable("Rooms");
+	}
+	map<int,pair<int,int> > timeWindows;
+	map<int,bool> visited;
+	bool first = true;
+	for(vector<pair<string,bool> >::iterator iter = allUsers.begin(); iter!=allUsers.end(); iter++){
+		map<string,vector<visit> >::iterator it2 = artlog.find(iter->first);
+		if(it2 == artlog.end() || it2->second[0].employer != iter->second){
+			if(toHtml){
+				htmlprint.endTable();
+				htmlprint.footer();
+			}
+			return;
+		}
+		int indicatorThatWasThereBefore = 0;
+		for(vector<visit>::reverse_iterator rit = it2->second.rbegin(); rit!=it2->second.rend(); rit++){
+			int room = rit->room;
+			bool arrival = rit->arrival;
+			int timestamp = rit->timeStamp;
+			if(first == true){
+				if(arrival && room != -1){
+					pair<int,int> tmp;
+					tmp.first = timestamp;
+					tmp.second = -1;
+					timeWindows[room] = tmp;
+					visited[room] = false;
+				}else if(arrival == false && room != -1){
+					timeWindows[room].second = timestamp;
+				}
+			}else{
+				map<int,pair<int,int> >::iterator found = timeWindows.end();
+				if(room != -1){
+					found = timeWindows.find(room);
+					if(found == timeWindows.end()){
+						continue;
+					}
+				}else{
+					continue;
+				}
+				if(arrival){
+					if(found->second.first < timestamp && (found->second.second > timestamp || found->second.second == -1)){
+						visited[room] = true;
+						found->second.first = timestamp;
+					}else if(found->second.first > timestamp){
+						indicatorThatWasThereBefore = 1;
+						visited[room] = true;
+					}
+				}else if(arrival == false){
+					if(found->second.first < timestamp && (found->second.second > timestamp || found->second.second == -1)){
+						visited[room] = true;
+						found->second.second = timestamp;
+					}else if(found->second.second < timestamp && indicatorThatWasThereBefore == 1){
+						indicatorThatWasThereBefore = 0;
+						visited[room] = true;
+					}else if(indicatorThatWasThereBefore == 1){
+						visited[room] = false;
+						indicatorThatWasThereBefore = 0;
+					}
+				}
+			}
+		}
+		if(!first){
+			for(map<int,bool>::iterator booliter = visited.begin(); booliter!=visited.end(); booliter++){
+				if(booliter->second == false){
+					timeWindows.erase(booliter->first);
+				}
+			}
+			visited.clear();
+			for(map<int,pair<int,int> >::iterator pairiter = timeWindows.begin(); pairiter!=timeWindows.end(); pairiter++){
+				visited[pairiter->first] = false;
+			}
+
+		}
+		first = false;
+	}
+	first = true;
+	for(map<int,pair<int,int> >::iterator pairiter = timeWindows.begin(); pairiter!=timeWindows.end(); pairiter++){
+		if(toHtml){
+			htmlprint.addElementToTable(to_string(pairiter->first));
+		}else{
+			if(first){
+				cout << pairiter->first;
+				first = false;
+			}else{
+				cout << "," << pairiter->first;
+			}
+		}
+	}
+	cout << endl;
+
+	if(toHtml){
+		htmlprint.endTable();
+		htmlprint.footer();
+	}
+
+}

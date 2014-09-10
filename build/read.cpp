@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string>
+#include <utility>
 #include "logmanager.hpp"
 using namespace std;
 
@@ -11,7 +12,7 @@ typedef struct{
 	bool HTML = false;
 	bool state = false;
 	bool rooms = false;
-	string name;
+	vector<pair<string,bool> > names;
 	string logFile;
 	bool allOk = false;
 	bool alpha = false;
@@ -21,6 +22,7 @@ typedef struct{
 	int lower2 = -1;
 	int upper2 = -1;
 	bool timeFlag = false;
+	bool roomHistory = false;
 }arguments;
 
 arguments getArguments(int argc, char **argv){
@@ -28,27 +30,27 @@ arguments getArguments(int argc, char **argv){
 	int c;
 	bool firstUdone = false;
 	bool firstLdone = false;
-	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:TB")) != -1){
+	while((c = getopt(argc, argv, "HK:SRE:G:AL:U:TBI")) != -1){
 		switch(c){
 			case 'K':
 				args.token = string(optarg);
 				break;
 			case 'E':
-				if(args.employer == -1){
-					args.employer = 1;
-					args.name = string(optarg);
-				}else{
-					args.allOk = false;
-					return args;
+				args.employer = 1;
+				{
+					pair<string,bool> tmp;
+					tmp.first = string(optarg);
+					tmp.second = true;
+					args.names.push_back(tmp);
 				}
 				break;
 			case 'G':
-				if(args.employer == -1){
-					args.employer = 0; 
-					args.name = string(optarg);
-				}else{
-					args.allOk = false;
-					return args;
+				args.employer = 0; 
+				{
+					pair<string,bool> tmp;
+					tmp.first = string(optarg);
+					tmp.second = false;
+					args.names.push_back(tmp);
 				}
 				break;
 			case 'H':
@@ -59,6 +61,9 @@ arguments getArguments(int argc, char **argv){
 				break;
 			case 'B':
 				args.beta = true;
+				break;
+			case 'I':
+				args.roomHistory = true;
 				break;
 			case 'U':
 				if(firstUdone == false){
@@ -127,16 +132,18 @@ int main(int argc, char **argv){
 	}
 	//myLog.prettyPrint();
 
-	if(args.timeFlag == false && args.state == true && args.employer == -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
+	if(args.roomHistory == false && args.timeFlag == false && args.state == true && args.names.size() == 0 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
 		myLog.printState(args.HTML);
-	}else if(args.timeFlag == false && args.state == false && args.employer != -1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
-		myLog.printUserData(args.name, args.employer == 1 ? true : false, args.HTML);
-	}else if(args.timeFlag == false && args.alpha == true && args.lower2 == -1 && args.upper2 == -1 && args.lower >= 0 && args.upper >= 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == false){
+	}else if(args.roomHistory == false && args.timeFlag == false && args.state == false && args.names.size() == 1 && args.rooms == true && args.alpha == false && args.lower == -1 && args.upper == -1 && args.beta == false){
+		myLog.printUserData(args.names[0].first, args.employer == 1 ? true : false, args.HTML);
+	}else if(args.roomHistory == false && args.timeFlag == false && args.alpha == true && args.lower2 == -1 && args.upper2 == -1 && args.lower >= 0 && args.upper >= 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == false){
 		myLog.personsInTimeWindow(args.lower,args.upper,args.HTML);
-	}else if(args.timeFlag == true && args.state == false && args.employer != -1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false && args.beta == false){
-		myLog.totalTimeOfUser(args.name, args.employer == 1 ? true : false);
-	}else if(args.timeFlag == false && args.alpha == false && args.lower2 >= 0 && args.upper2 >= 0 && args.lower2 < args.upper2 && args.lower >= 0 && args.upper != 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == true){
+	}else if(args.roomHistory == false && args.timeFlag == true && args.state == false  && args.names.size() == 1 && args.rooms == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.HTML == false && args.beta == false){
+		myLog.totalTimeOfUser(args.names[0].first, args.employer == 1 ? true : false);
+	}else if(args.roomHistory == false && args.timeFlag == false && args.alpha == false && args.lower2 >= 0 && args.upper2 >= 0 && args.lower2 < args.upper2 && args.lower >= 0 && args.upper >= 0 && args.upper > args.lower && args.state == false && args.employer == -1 && args.rooms == false && args.beta == true){
 		myLog.leavedPersonsDuringTimeWindow(args.lower,args.upper,args.lower2,args.upper2,args.HTML);
+	}else if(args.roomHistory == true && args.timeFlag == false && args.alpha == false && args.lower == -1 && args.upper == -1 && args.state == false && args.names.size() > 0 && args.rooms == false && args.beta == false){
+		myLog.printSameRooms(args.names,args.HTML);
 	}else{
 		cout << "invalid" << endl;
 		return -1;
