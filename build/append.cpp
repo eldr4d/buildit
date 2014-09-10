@@ -130,7 +130,6 @@ int handleInput(arguments args){
 		return 0;
 	}
 	myLog.serialize();
-	//myLog.prettyPrint();
 	return 0;
 }
 
@@ -149,7 +148,6 @@ int main(int argc, char **argv){
     		while(batchFile.eof() == false){
     			char line[512];
     			batchFile.getline(line,512);
-    			//cout << "Line = " << line << endl << "::";
     			char *point = strtok(line," ");
     			char *newargv[40];
     			int newargc = 1;
@@ -157,10 +155,8 @@ int main(int argc, char **argv){
     			while(point != NULL){
     				newargv[newargc] = point;
     				newargc++;
-    				//cout << point << ", ";
     				point = strtok(NULL, " ");
     			}
-    			//cout << endl;
 	    		arguments args2 = getArguments(newargc, newargv);
 	    		if(args2.allOk == false || args2.batchMode == true){
 	    			continue;
@@ -168,7 +164,6 @@ int main(int argc, char **argv){
 	    		returnState = handleInput(args2);
     		}
     	}else{
-    		//cout << "invalid4" << endl;
     		batchFile.close();
     		return 0;
     	}
